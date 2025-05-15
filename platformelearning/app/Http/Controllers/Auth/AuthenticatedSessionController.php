@@ -6,13 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;  
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Affiche le formulaire de connexion.
+     * Display the login view.
      */
     public function create(): View
     {
@@ -20,42 +20,28 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Traite la tentative d'authentification.
+     * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        // 1. Authentification via LoginRequest (validation + check des credentials)
         $request->authenticate();
 
-        // 2. Régénère l'ID de session pour prévenir les attaques de fixation
         $request->session()->regenerate();
 
-        // 3. Récupère l'utilisateur connecté
-        $user = Auth::user();
-
-        // 4. Redirection selon le rôle
-        switch ($user->role) {
-            case 'admin':
-                return redirect()->route('admin.dashboard');
-            case 'formateur':
-                return redirect()->route('formateur.dashboard');
-            case 'apprenant':
-            default:
-                return redirect()->route('apprenant.dashboard');
-        }
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
-     * Détruit la session authentifiée (logout).
+     * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
+
         $request->session()->regenerateToken();
 
-        //Pour rediriger vers /login 
-        return redirect()->route('login');
+        return redirect('/');
     }
 }
